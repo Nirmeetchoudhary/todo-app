@@ -22,7 +22,7 @@ Users can **add, edit, delete, and mark tasks as done**, and each user can only 
 ## 🚀 Live Demo
 
 Check out the live application here:  
-[To-Do List Live](https://nirmeetchoudhary.github.io/To-do-app/)
+[To-Do List Live]( https://nirmeetchoudhary.github.io/todo-app/)
 
 ---
 
