@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-screen flex flex-col items-center justify-center">
+
+  <!-- Title -->
+  <h1 class="text-4xl font-bold text-white mb-8">To-Do List</h1>
+
+  <div class="bg-white shadow-xl rounded-xl p-8 w-96">
+    <h2 class="text-2xl font-bold text-center mb-6">Welcome Back</h2>
+    <div class="space-y-4">
+      <input type="email" id="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400">
+      <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400">
+      <button id="loginBtn" class="w-full bg-pink-600 text-white py-2 rounded-lg hover:bg-pink-700 transition">Login</button>
+    </div>
+    <p class="mt-4 text-center text-sm">Don’t have an account? 
+      <a href="signup.html" class="text-pink-600 font-semibold hover:underline">Sign Up</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js";
+    const supabase = createClient("https://ecmebnuobqwuineekiqm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbWVibnVvYnF3dWluZWVraXFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMTk1NzksImV4cCI6MjA3NDY5NTU3OX0.qy9Fh92z4j3WMVKPsIIYvup2HCYJg9on8FOSuko4Ilw");
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+      else window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

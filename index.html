@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+  <div class="w-full max-w-2xl bg-white shadow-lg rounded-lg p-6">
+
+    <!-- Header: title + user info -->
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold text-indigo-600">To-Do List</h1>
+      <div class="flex items-center gap-3">
+        <span id="userEmail" class="text-gray-600 text-sm"></span>
+        <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Logout</button>
+      </div>
+    </div>
+
+    <!-- Task input -->
+    <div class="flex gap-2 mb-4">
+      <input type="text" id="taskInput" placeholder="Enter a new task..." class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <button id="addBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Add</button>
+    </div>
+
+    <!-- Task list -->
+    <ul id="taskList" class="space-y-2"></ul>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js";
+    const supabase = createClient("https://ecmebnuobqwuineekiqm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbWVibnVvYnF3dWluZWVraXFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMTk1NzksImV4cCI6MjA3NDY5NTU3OX0.qy9Fh92z4j3WMVKPsIIYvup2HCYJg9on8FOSuko4Ilw");
+
+    // Check user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) window.location.href = "login.html";
+
+    document.getElementById("userEmail").textContent = user.email;
+
+    const taskInput = document.getElementById("taskInput");
+    const addBtn = document.getElementById("addBtn");
+    const taskList = document.getElementById("taskList");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    // Load tasks
+    async function loadTasks() {
+      const { data } = await supabase.from("tasks").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      taskList.innerHTML = "";
+      data.forEach(renderTask);
+    }
+
+    // Add task
+    addBtn.addEventListener("click", async () => {
+      const text = taskInput.value.trim();
+      if (!text) return;
+      await supabase.from("tasks").insert([{ task_text: text, user_id: user.id }]);
+      taskInput.value = "";
+      loadTasks();
+    });
+
+    // Render task with inline edit
+    function renderTask(task) {
+      const li = document.createElement("li");
+      li.className = "flex justify-between items-center bg-gray-50 p-3 rounded-lg border";
+
+      const leftDiv = document.createElement("div");
+      leftDiv.className = "flex items-center gap-2";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = task.done;
+      const span = document.createElement("span");
+      span.textContent = task.task_text;
+      if (task.done) span.classList.add("line-through", "text-gray-400");
+      leftDiv.appendChild(checkbox);
+      leftDiv.appendChild(span);
+
+      const actions = document.createElement("div");
+      actions.className = "flex gap-2";
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit"; editBtn.className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Delete"; deleteBtn.className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600";
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+
+      li.appendChild(leftDiv);
+      li.appendChild(actions);
+      taskList.appendChild(li);
+
+      // Toggle done
+      checkbox.onchange = async () => {
+        await supabase.from("tasks").update({ done: checkbox.checked }).eq("id", task.id);
+        loadTasks();
+      };
+
+      // Delete
+      deleteBtn.onclick = async () => {
+        await supabase.from("tasks").delete().eq("id", task.id);
+        loadTasks();
+      };
+
+      // Inline edit
+      editBtn.onclick = () => {
+        leftDiv.innerHTML = "";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = task.task_text;
+        input.className = "px-2 py-1 border rounded flex-1";
+        leftDiv.appendChild(input);
+
+        actions.innerHTML = "";
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Save"; saveBtn.className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600";
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel"; cancelBtn.className="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600";
+
+        actions.appendChild(saveBtn);
+        actions.appendChild(cancelBtn);
+
+        saveBtn.onclick = async () => {
+          if (input.value.trim() === "") return;
+          await supabase.from("tasks").update({ task_text: input.value.trim() }).eq("id", task.id);
+          loadTasks();
+        };
+
+        cancelBtn.onclick = loadTasks;
+      };
+    }
+
+    // Logout
+    logoutBtn.onclick = async () => {
+      await supabase.auth.signOut();
+      window.location.href = "login.html";
+    };
+
+    loadTasks();
+  </script>
+</body>
+</html>
